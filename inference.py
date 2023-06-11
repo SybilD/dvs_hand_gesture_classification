@@ -73,7 +73,7 @@ def parse_args():
     ##Specify folder where the state is saved in 
     parser.add_argument(
         '-s', '--state', dest='state', default='Trained_400x300_bs3_LR001_82split',
-        help="Path to ibmGestureNet.pt, if not specified, Trained_400x300_bs3_LR001_82split will be used.")
+        help="Path to HANDGestureNet.pt, if not specified, Trained_400x300_bs3_LR001_82split will be used.")
     
     args = parser.parse_args()
     return args
@@ -125,8 +125,8 @@ def main():
     
     ##Retrieve the arguments and set network parameters
     args = parse_args()
-    state_path = '/home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_IBMGesture/' + args.state + '/ibmGestureNet.pt'
-    netParams = snn.params('/home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_IBMGesture/network.yaml')
+    state_path = '/home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_HANDGesture/' + args.state + '/HANDGestureNet.pt'
+    netParams = snn.params('/home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_HANDGesture/network.yaml')
 
     # Define the cuda device to run the code on.
     device = torch.device('cuda')

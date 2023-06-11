@@ -12,7 +12,7 @@ import slayerSNN as snn
 import pandas as pd
 
 # Define dataset module
-class IBMGestureDataset(Dataset):
+class HANDGestureDataset(Dataset):
     def __init__(self, datasetPath, sampleFile, samplingTime, sampleLength):
         self.path = datasetPath 
         self.samples = pd.read_csv(sampleFile)
@@ -142,7 +142,7 @@ if __name__ == '__main__':
   	# Create network instance.
     #net = Network(netParams).to(device) ##when using a single GPU 
     net = torch.nn.DataParallel(Network(netParams).to(device), device_ids=deviceIds) ##when using multiple GPUs
-    #net.load_state_dict(torch.load('Trained_400x300_rotated_bs3_LR0001_82split/ibmGestureNet.pt')) ##uncomment to load a saved state and continue training  
+    #net.load_state_dict(torch.load('Trained_400x300_rotated_bs3_LR0001_82split/handGestureNet.pt')) ##uncomment to load a saved state and continue training  
   	# Create snn loss instance.
     error = snn.loss(netParams, snn.loihi).to(device)
   
@@ -152,14 +152,14 @@ if __name__ == '__main__':
   
   	# Dataset and dataLoader instances.
     ##Change datasetPath and sampleFile accordingly for trainingSet and testingSet
-    trainingSet = IBMGestureDataset(datasetPath ='/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/', 
+    trainingSet = HANDGestureDataset(datasetPath ='/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/', 
   									sampleFile  ='/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/train_allDA_180.txt',
   									samplingTime=netParams['simulation']['Ts'],
   									sampleLength=netParams['simulation']['tSample'])
     ##change batch_size accordingly here                                            
     trainLoader = DataLoader(dataset=trainingSet, batch_size=3, shuffle=True, num_workers=1)
   								   
-    testingSet = IBMGestureDataset(datasetPath  ='/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/', 
+    testingSet = HANDGestureDataset(datasetPath  ='/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/', 
   								   sampleFile  ='/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/test_allDA_180.txt',
   								   samplingTime=netParams['simulation']['Ts'],
   								   sampleLength=netParams['simulation']['tSample'])
@@ -230,13 +230,13 @@ if __name__ == '__main__':
         stats.update()
         stats.plot(saveFig=True, path='Trained_400x300_allDA_180_bs3_LR0001_82split/')
         if stats.training.bestLoss is True:
-            torch.save(net.state_dict(), 'Trained_400x300_allDA_180_bs3_LR0001_82split/ibmGestureNet.pt')
+            torch.save(net.state_dict(), 'Trained_400x300_allDA_180_bs3_LR0001_82split/handGestureNet.pt')
             print("New state saved")
     
   	# Save training data
     ##Change folder name here to specify the file to save the resulting weights, accuracy, loss plots and state of network 
     stats.save('Trained_400x300_allDA_180_bs3_LR0001_82split/')
-    net.load_state_dict(torch.load('Trained_400x300_allDA_180_bs3_LR0001_82split/ibmGestureNet.pt'))
+    net.load_state_dict(torch.load('Trained_400x300_allDA_180_bs3_LR0001_82split/handGestureNet.pt'))
     genLoihiParams(net)
     
     # Plot the results.
