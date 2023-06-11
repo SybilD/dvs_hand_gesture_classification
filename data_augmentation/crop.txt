@@ -1,0 +1,2 @@
+sudo python3 dataprocessing_crop640x480.py -i '640x480' 
+sudo python3 dataprocessing_crop512x384.py -i '512x384'

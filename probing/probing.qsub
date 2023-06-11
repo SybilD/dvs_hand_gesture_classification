@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=5:ngpus=1
+#PBS -N SLAYER_probing
+#PBS -j oe 
+#PBS -o probing.log
+#PBS -q gold
+
+cd "$PBS_O_WORKDIR"
+date
+nvidia-smi
+source /home/users/nurul_akhira/anaconda3/etc/profile.d/conda.sh
+conda activate slayer
+python /home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_IBMGesture/probing.py

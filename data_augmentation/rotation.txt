@@ -1,0 +1,15 @@
+sudo python3 dataprocessing_rotate.py -a 45
+sudo python3 dataprocessing_rotate.py -a 50
+sudo python3 dataprocessing_rotate.py -a 55
+sudo python3 dataprocessing_rotate.py -a 65
+sudo python3 dataprocessing_rotate.py -a 70
+sudo python3 dataprocessing_rotate.py -a 75
+sudo python3 dataprocessing_rotate.py -a 85
+sudo python3 dataprocessing_rotate.py -a 95
+sudo python3 dataprocessing_rotate.py -a 105
+sudo python3 dataprocessing_rotate.py -a 110
+sudo python3 dataprocessing_rotate.py -a 115
+sudo python3 dataprocessing_rotate.py -a 125
+sudo python3 dataprocessing_rotate.py -a 130
+sudo python3 dataprocessing_rotate.py -a 135
+
