@@ -17,7 +17,7 @@ from dv import LegacyAedatFile
 
 # Define the network
 class Network(torch.nn.Module):
-    def __init__(self, netParams, d):
+    def __init__(self, netParams):
         super(Network, self).__init__()
         # initialize slayer
         slayer = snn.loihi(netParams['neuron'], netParams['simulation'])
@@ -28,10 +28,10 @@ class Network(torch.nn.Module):
         self.pool1 = slayer.pool(4)
         self.pool2 = slayer.pool(2)
         self.pool3 = slayer.pool(2)
-        a = math.ceil(40/1.6) ## 1.6 is the denominator I divide the original resolution by, to decrease to a smaller resolution
-        b = math.ceil(30/1.6) ## The dimension of output before flattening for the original resolution is 40x30x32. So for smaller resolutions, we can just scale 40 and 30 by 1/1.6
-        self.fc1   = slayer.dense((a*b*32), 512) 
-        self.fc2   = slayer.dense(512, 2)
+        # a = math.ceil(40/1.6) ## 1.6 is the denominator I divide the original resolution by, to decrease to a smaller resolution
+        # b = math.ceil(30/1.6) ## The dimension of output before flattening for the original resolution is 40x30x32. So for smaller resolutions, we can just scale 40 and 30 by 1/1.6
+        self.fc1   = slayer.dense((8*8*32), 512) 
+        self.fc2   = slayer.dense(512, 11) # 2
         self.drop  = slayer.dropout(0.1)
 
     ##Dimension of spikes after layer is given on the right
@@ -73,7 +73,7 @@ def parse_args():
     ##Specify folder where the state is saved in 
     parser.add_argument(
         '-s', '--state', dest='state', default='Trained_400x300_bs3_LR001_82split',
-        help="Path to HANDGestureNet.pt, if not specified, Trained_400x300_bs3_LR001_82split will be used.")
+        help="Path to ibmGestureNet.pt, if not specified, Trained_400x300_bs3_LR001_82split will be used.")
     
     args = parser.parse_args()
     return args
@@ -89,10 +89,10 @@ class dataset(Dataset):
         classLabel = 1 ##dummy classLabel, classLabel is not required when conducting inference 
         # Read input spike
         inputSpikes = snn.spikeFileIO.event(self.event_array[:, 0], self.event_array[:, 1], self.event_array[:, 2], self.event_array[:, 3])
-        x = int(640/1.6) ##to get the correct input resolution
-        y = int(480/1.6)
-        spiketensor = inputSpikes.toSpikeTensor(torch.zeros((2,y,x,1450)), samplingTime=1.0) ##tensor shape: (channels, height, width, number of time bins)
-        desiredClass = torch.zeros((2, 1, 1, 1))
+        # x = int(640/1.6) ##to get the correct input resolution
+        # y = int(480/1.6)
+        spiketensor = inputSpikes.toSpikeTensor(torch.zeros((2,128,128,1450)), samplingTime=1.0) ##tensor shape: (channels, height, width, number of time bins)
+        desiredClass = torch.zeros((11, 1, 1, 1)) # 2
         desiredClass[classLabel,...] = 1
         
         return spiketensor, desiredClass, classLabel
@@ -125,21 +125,22 @@ def main():
     
     ##Retrieve the arguments and set network parameters
     args = parse_args()
-    state_path = '/home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_HANDGesture/' + args.state + '/HANDGestureNet.pt'
-    netParams = snn.params('/home/users/nurul_akhira/slayerPytorch/exampleLoihi/03_HANDGesture/network.yaml')
+    state_path = '/home/users/nurul_akhira/Electronics/slayerPytorch/exampleLoihi/03_IBMGesture/' + args.state + '/ibmGestureNet.pt'
+    netParams = snn.params('/home/users/nurul_akhira/Electronics/slayerPytorch/exampleLoihi/03_IBMGesture/network.yaml')
 
     # Define the cuda device to run the code on.
     device = torch.device('cuda')
     deviceIds = [0] 
 
     # Create network instance and load the saved state
-    #net = Network(netParams, d).to(device)
-    net = torch.nn.DataParallel(Network(netParams, d).to(device), device_ids=deviceIds) #works for single GPU also 
-    net.load_state_dict(torch.load(state_path))
+    net = Network(netParams).to(device)
+    # net = torch.nn.DataParallel(Network(netParams).to(device), device_ids=deviceIds) #works for single GPU also 
+    # net = torch.nn.DataParallel(Network(netParams).to(device), map_location='cuda:0') #works for single GPU also 
+    net.load_state_dict(torch.load(state_path, map_location='cuda:0'))
     error = snn.loss(netParams, snn.loihi).to(device)
     
     ##Path to samples to classify 
-    path = "/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/400x300/"
+    path = "/mnt/beegfs/Scratch/nurul_akhira/19p_dataset/128x128/"
     
     ##Classifying only the test samples 
     test = ['ryan',
@@ -147,6 +148,23 @@ def main():
         'tomo',
         'raul',
         ]
+        
+    train = ['daniela',
+         'indra',
+         'ilyas',
+         'ameer',
+         'jiewei',
+         'cassie',
+         'eliana',
+         'akhira',
+         'eduardo',
+         'azreena',
+         'jin',
+         'cheegan',
+         'dongke',
+         'natasha',
+         'melvin',
+         ] 
         
     action = [
         'wave',
@@ -167,13 +185,15 @@ def main():
                      #'eventdrop/dropbytime', 
                      #'flip/xflip', 
                      #'flip/yflip', 
-                     #'rotated',
+                    #  'rotated',
                      #'xyshift',
                      #'cropped/512x384',
                      #'cropped/640x480'
+                    #  'rotated/90',
                      ]
     
-    angles = np.arange(-45, 50, 5)
+    #angles = np.arange(-45, 50, 5)
+    angles = np.arange(45, 140, 5) #for Trained_400x300_rotated45_bs3_LR0001_82split the training dataset is the horizontal (90deg rotated) dataset
     #angles = np.arange(-180, 200, 20)
     angles = np.delete(angles, 9) #delete zero
     angles_str = []
@@ -192,7 +212,8 @@ def main():
     #    angle_list = np.append(angle_list, angles_str)
     
     print(args.state)
-    
+    total_correct = 0
+    total_samples = 0
     i = 0
     #Hand wave classification
     print('Hand wave classification:')
@@ -201,23 +222,42 @@ def main():
         for DA in data_augmentation:
             if DA == 'rotated':
                 for a in angle_list: ## comment this line out if using random angles
-                    for name in test:
-                        #filename = 'rotated/{}/wave_{}_{}.npy'.format(angle_list[i], name, light) ## uncomment this line if using random angles
-                        filename = 'rotated/{}/wave_{}_{}.npy'.format(a, name, light) ## comment this line out if using random angles
-                        i += 1
+                    for name in train: ## the if else statements below is to omit out the faulty training samples that either cause an error or contained too much noise
+                        if name == 'cheegan' and light == 'roomlight':
+                            continue
+                        elif name == 'ameer' and light == 'dim':
+                            continue
+                        elif name == 'indra' and light == 'natural':
+                            continue
+                        else: 
+                            #filename = 'rotated/{}/wave_{}_{}.npy'.format(angle_list[i], name, light) ## uncomment this line if using random angles
+                            filename = 'rotated/{}/wave_{}_{}.npy'.format(a, name, light) ## comment this line out if using random angles
+                            i += 1
+                            raw_path = path + filename
+                            total_samples += 1
+                            if classify(device, net, raw_path, error) == 0:
+                                correct += 1
+                                total_correct += 1
+                            #else:
+                            #    print(filename) ##uncomment else line if you want to know which file is incorrectly classified
+            else:            
+                for name in test:
+                    if name == 'cheegan' and light == 'roomlight':
+                        continue
+                    elif name == 'ameer' and light == 'dim':
+                        continue
+                    elif name == 'indra' and light == 'natural':
+                        continue
+                    else: 
+                        total_samples += 1
+                        filename = 'wave_{}_{}.npy'.format(name, light) 
                         raw_path = path + filename
                         if classify(device, net, raw_path, error) == 0:
                             correct += 1
+                            print(filename)
+                            total_correct += 1
                         #else:
-                        #    print(filename) ##uncomment else line if you want to know which file is incorrectly classified
-            else:            
-                for name in test:
-                    filename = '{}/wave_{}_{}.npy'.format(DA, name, light) 
-                    raw_path = path + filename
-                    if classify(device, net, raw_path, error) == 0:
-                        correct += 1
-                    #else:
-                    #    print(filename)
+                        #    print(filename)
         
         print(light + ':') ##printing out total number of correctly classified samples for each lighting condition
         print(correct)
@@ -231,26 +271,33 @@ def main():
         for DA in data_augmentation:
             if DA == 'rotated':
                 for a in angle_list: 
-                    for name in test:
+                    for name in train:
+                        total_samples += 1
                         #filename = 'rotated/{}/rotate_{}_{}.npy'.format(angle_list[i], name, light)
                         filename = 'rotated/{}/rotate_{}_{}.npy'.format(a, name, light)
                         i += 1
                         raw_path = path + filename
                         if classify(device, net, raw_path, error) == 1: #1 for hand rotation, 0 for hand wave
                             correct += 1
+                            total_correct += 1
                         #else:
                         #    print(filename)
             else:            
                 for name in test:
-                    filename = '{}/rotate_{}_{}.npy'.format(DA, name, light) 
+                    total_samples += 1
+                    filename = 'rotate_{}_{}.npy'.format(name, light) 
                     raw_path = path + filename
                     if classify(device, net, raw_path, error) == 1:
                         correct += 1
+                        print(filename)
+                        total_correct += 1
                     #else:
                     #    print(filename)
                     
         print(light + ':')
         print(correct)
+    
+    #print(total_correct/total_samples*100)
     
 if __name__ == "__main__":
     main()

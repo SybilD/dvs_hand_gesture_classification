@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -l select=1:ncpus=40:ngpus=8
+#PBS -N DVSGesture_1
+#PBS -j oe 
+#PBS -o training.log
+#PBS -q gold
+#PBS -l walltime=100:00:00
+cd "$PBS_O_WORKDIR"
+date
+nvidia-smi
+source /home/users/nurul_akhira/anaconda3/etc/profile.d/conda.sh
+conda activate slayer
+cd /home/users/nurul_akhira/Electronics/slayerPytorch/exampleLoihi/03_IBMGesture
+python ibmGestureTrain.py

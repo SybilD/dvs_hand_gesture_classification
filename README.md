@@ -46,5 +46,13 @@ Contains the codes to probe the intermediate results as well as the gif pictures
 ## Training
 Contains an example of the model training procedures. The paths needs to be modified accordingly and the dependency needs to be pre-installed. 
 
+### Training Result (IBM)
+![My Image](accuracy_ibm.png)
+![My Image](loss_ibm.png)
+
+### Training Result (IBM)
+![My Image](accuracy_merge.png)
+![My Image](loss_merge.png)
+
 ## Inference
 Contains the code to perform inference based on the network model obtained from training. Paths needs to be modified. 
